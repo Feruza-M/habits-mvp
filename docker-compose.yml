@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16
+    container_name: habits-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: habit_tracker
+      POSTGRES_USER: habit_user
+      POSTGRES_PASSWORD: habit_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U habit_user -d habit_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: habits-app
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://habit_user:habit_password@db:5432/habit_tracker
+      AWS_REGION: eu-central-1
+      AWS_S3_BUCKET: my-habit-reports
+      AWS_S3_PREFIX: habit-reports
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
