@@ -1,43 +1,7 @@
+---
 - name: Deploy habits application
   hosts: app
   become: true
 
-  tasks:
-    - name: Create application directory
-      file:
-        path: /opt/habits-mvp
-        state: directory
-        owner: ubuntu
-        group: ubuntu
-        mode: '0755'
-
-    - name: Copy project files
-      copy:
-        src: ../
-        dest: /opt/habits-mvp/
-        owner: ubuntu
-        group: ubuntu
-
-    - name: Create env file
-      copy:
-        dest: /opt/habits-mvp/.env
-        content: |
-          DATABASE_URL=postgresql+psycopg://habit_user:habit_password@db:5432/habit_tracker
-          AWS_REGION=us-east-1
-          AWS_S3_BUCKET=feruza-habits-reports-2026
-          AWS_S3_PREFIX=habit-reports
-        owner: ubuntu
-        group: ubuntu
-        mode: '0600'
-
-    - name: Set application port to 8000 on app VM
-      replace:
-        path: /opt/habits-mvp/docker-compose.yml
-        regexp: '"8001:8000"'
-        replace: '"8000:8000"'
-
-    - name: Start application with Docker Compose
-      command: docker compose up -d --build
-      args:
-        chdir: /opt/habits-mvp
-      become_user: ubuntu
+  roles:
+    - deploy

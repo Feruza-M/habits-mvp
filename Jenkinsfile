@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        APP_IP = '34.228.166.91'
+        APP_IP = '54.226.164.204'
     }
 
     stages {
@@ -16,20 +16,42 @@ pipeline {
             steps {
                 sh '''
                     ansible-playbook \
-                    -i ansible/inventory.ini \
-                    ansible/deploy.yml \
-                    --syntax-check
+                      -i ansible/inventory.ini \
+                      ansible/playbook.yml \
+                      --syntax-check
+
+                    ansible-playbook \
+                      -i ansible/inventory.ini \
+                      ansible/deploy.yml \
+                      --syntax-check
+                '''
+            }
+        }
+
+        stage('Install Docker') {
+            steps {
+                sh '''
+                    ansible-playbook \
+                      -i ansible/inventory.ini \
+                      ansible/playbook.yml
                 '''
             }
         }
 
         stage('Deploy') {
             steps {
-                sh '''
-                    ansible-playbook \
-                    -i ansible/inventory.ini \
-                    ansible/deploy.yml
-                '''
+                withCredentials([
+                    string(
+                        credentialsId: 'habits-database-url',
+                        variable: 'HABITS_DATABASE_URL'
+                    )
+                ]) {
+                    sh '''
+                        ansible-playbook \
+                          -i ansible/inventory.ini \
+                          ansible/deploy.yml
+                    '''
+                }
             }
         }
 

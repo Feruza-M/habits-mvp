@@ -1,0 +1,45 @@
+---
+- name: Create application directory
+  ansible.builtin.file:
+    path: /opt/habits-mvp
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Copy application files
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../{{ item }}"
+    dest: "/opt/habits-mvp/{{ item }}"
+    owner: ubuntu
+    group: ubuntu
+    mode: preserve
+  loop:
+    - Dockerfile
+    - docker-compose.yml
+    - requirements.txt
+    - app/
+
+- name: Create env file
+  ansible.builtin.copy:
+    dest: /opt/habits-mvp/.env
+    content: |
+      DATABASE_URL={{ lookup('env', 'HABITS_DATABASE_URL') }}
+      AWS_REGION=us-east-1
+      AWS_S3_BUCKET=feruza-habits-reports-2026
+      AWS_S3_PREFIX=habit-reports
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+- name: Set application port to 8000 on app VM
+  ansible.builtin.replace:
+    path: /opt/habits-mvp/docker-compose.yml
+    regexp: '"8001:8000"'
+    replace: '"8000:8000"'
+
+- name: Start application with Docker Compose
+  ansible.builtin.command: docker compose up -d --build
+  args:
+    chdir: /opt/habits-mvp
+  become_user: ubuntu
